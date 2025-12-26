@@ -4,6 +4,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 ROOT_PATH = Path(__file__).resolve().parent.parent
 if str(ROOT_PATH) not in sys.path:
@@ -14,7 +15,16 @@ from app.config.settings import get_settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
+settings = get_settings()
+
 app = FastAPI(title="InterOps Telemetry API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=False,
+)
 app.include_router(telemetry_router, prefix="/api")
 
 
@@ -24,7 +34,6 @@ async def health() -> dict:
 
 
 if __name__ == "__main__":
-    settings = get_settings()
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
