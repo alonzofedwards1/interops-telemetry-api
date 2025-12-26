@@ -5,7 +5,7 @@ from typing import List
 
 @dataclass(frozen=True)
 class Settings:
-    port: int = int(os.environ.get("PORT", 8080))
+    port: int = int(os.environ.get("PORT", 9000))
     allowed_origins: List[str] = None
 
 
