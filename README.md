@@ -1,27 +1,29 @@
-# InterOps Telemetry API (Node.js)
+# InterOps Telemetry API (FastAPI)
 
-Minimal, production-safe telemetry ingestion API for InterOps. Accepts telemetry events over HTTP, stores them in memory, and exposes them for downstream dashboards. No database, no auth, non-blocking ingestion.
+Minimal, production-safe telemetry ingestion API for InterOps. Accepts telemetry events over HTTP, validates them with Pydantic, stores them in memory, and exposes them for downstream dashboards. No database, no auth, non-blocking ingestion.
 
 ## Requirements
-- Node.js 20+
+- Python 3.12+
 - Docker (optional)
 
 ## Run locally
 ```bash
-npm install
-npm start
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 9000
 ```
-The service listens on port **8080** by default.
+The service listens on port **9000** by default and exposes Swagger UI at `/docs`.
 
 ## Run with Docker
 ```bash
 docker build -t interops-telemetry-api .
-docker run --rm -p 8081:8080 interops-telemetry-api
+docker run --rm -p 9000:9000 interops-telemetry-api
 ```
-The container listens on port 8080; map host port 8081 (or any other) as needed.
+The container listens on port 9000; map the host port as needed.
 
 ## Endpoints
-- `POST /api/telemetry/events` – accepts telemetry events, logs the event ID when valid, always returns `202 Accepted`
+- `POST /api/telemetry/events` – accepts telemetry events, validates payloads, logs details, and returns `{ "status": "ok" }`
 - `GET /api/telemetry/events` – returns all stored telemetry events as JSON
 - `GET /health` – basic health probe
 
@@ -29,49 +31,48 @@ The container listens on port 8080; map host port 8081 (or any other) as needed.
 ```json
 {
   "eventId": "string",
-  "eventType": "PD_EXECUTION",
-  "timestamp": "ISO-8601 string",
-  "source": {
-    "system": "MIRTH | MANUAL | APP",
-    "channelId": "string",
-    "environment": "TEST | DEV | PROD"
-  },
-  "correlation": {
-    "requestId": "string",
-    "messageId": "string"
-  },
-  "execution": { "durationMs": 42 },
-  "outcome": { "status": "SUCCESS | FAILURE", "resultCount": 1 },
-  "protocol": { "standard": "HL7v3 | FHIR | X12", "interactionId": "string" }
+  "timestampUtc": "2024-01-01T12:00:00Z",
+  "source": "MIRTH",
+  "protocol": "HL7v3",
+  "interactionId": "PRPA_IN201306UV02",
+  "organization": "VA",
+  "qhin": "CommonWell",
+  "environment": "TEST",
+  "status": "SUCCESS",
+  "durationMs": 42,
+  "resultCount": 1,
+  "correlationId": "REQ-123"
 }
 ```
-
-Validation is minimal: `eventId` and `eventType` must be non-empty strings. Invalid payloads still return `202 Accepted` but emit a warning log.
 
 ## Example curl commands
 Post telemetry (mirrors Mirth HTTP Sender):
 ```bash
-curl -X POST http://localhost:8080/api/telemetry/events \
+curl -i -X POST http://localhost:9000/api/telemetry/events \
   -H "Content-Type: application/json" \
   -d '{
-    "eventId": "123",
-    "eventType": "PD_EXECUTION",
-    "timestamp": "2024-01-01T12:00:00Z",
-    "source": {"system": "MIRTH", "channelId": "channel-1", "environment": "TEST"},
-    "correlation": {"requestId": "req-1", "messageId": "msg-1"},
-    "execution": {"durationMs": 42},
-    "outcome": {"status": "SUCCESS", "resultCount": 1},
-    "protocol": {"standard": "HL7v3", "interactionId": "PRPA_IN201306UV02"}
+    "eventId": "evt-001",
+    "timestampUtc": "2025-12-26T22:15:00Z",
+    "source": "MIRTH",
+    "protocol": "HL7v3",
+    "interactionId": "PRPA_IN201306UV02",
+    "organization": "VA",
+    "qhin": "CommonWell",
+    "environment": "TEST",
+    "status": "SUCCESS",
+    "durationMs": 187,
+    "resultCount": 1,
+    "correlationId": "REQ-123"
   }'
 ```
 
 Read stored telemetry:
 ```bash
-curl http://localhost:8080/api/telemetry/events
+curl http://localhost:9000/api/telemetry/events
 ```
 
 ## Notes
 - CORS is enabled for all origins by default.
 - Telemetry storage is an in-memory array; data clears on restart.
-- Ingestion never blocks callers. Payload errors are logged but still return 202.
+- Ingestion does not block callers. Invalid payloads return HTTP 400 with validation details and are logged with structured context.
 - Designed for use with Mirth HTTP Sender after PD responses are built.

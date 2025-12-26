@@ -25,7 +25,7 @@ async def ingest_event(payload: dict = Body(...)) -> Response:
             },
         )
         store.add(event)
-        return JSONResponse(status_code=202, content={"status": "ok"})
+        return JSONResponse(status_code=200, content={"status": "ok"})
     except HTTPException:
         raise
     except Exception:

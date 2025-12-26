@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TelemetryEvent(BaseModel):
@@ -18,6 +18,4 @@ class TelemetryEvent(BaseModel):
     resultCount: int = Field(..., ge=0, description="Count of results returned")
     correlationId: str = Field(..., description="Correlation identifier for tracing")
 
-    class Config:
-        anystr_strip_whitespace = True
-        validate_assignment = True
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
