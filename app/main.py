@@ -5,11 +5,9 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
 
-if __package__ is None or __package__ == "":
-    root_path = Path(__file__).resolve().parent.parent
-    if str(root_path) not in sys.path:
-        sys.path.insert(0, str(root_path))
-    __package__ = "app"
+ROOT_PATH = Path(__file__).resolve().parent.parent
+if str(ROOT_PATH) not in sys.path:
+    sys.path.insert(0, str(ROOT_PATH))
 
 from app.api.telemetry import router as telemetry_router
 from app.config.settings import get_settings
@@ -28,7 +26,7 @@ async def health() -> dict:
 if __name__ == "__main__":
     settings = get_settings()
     uvicorn.run(
-        app,
+        "app.main:app",
         host="0.0.0.0",
         port=settings.port,
         reload=False,
