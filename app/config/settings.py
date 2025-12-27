@@ -3,9 +3,15 @@ from dataclasses import dataclass
 from typing import List
 
 
+DEFAULT_PORT = 8081
+
+
 @dataclass(frozen=True)
 class Settings:
-    port: int = int(os.environ.get("PORT", 8080))
+    """Application settings."""
+
+    # Use a dedicated env var to override only when intentional; default to 8081.
+    port: int = int(os.environ.get("TELEMETRY_PORT", DEFAULT_PORT))
     allowed_origins: List[str] = None
 
 
