@@ -72,6 +72,9 @@ Read stored telemetry:
 curl http://localhost:8081/api/telemetry/events
 ```
 
+## Frontend configuration
+If you are viewing the telemetry table in the frontend, ensure it is pointed at the backend you are posting to. The UI defaults to `http://100.27.251.103:8081/api`; when you post events to `localhost`, set `REACT_APP_API_BASE_URL=http://localhost:8081/api`, restart the frontend, and refresh the page so it fetches from your local service.
+
 ## Notes
 - CORS is enabled for all origins by default.
 - Telemetry storage is an in-memory array; data clears on restart.
