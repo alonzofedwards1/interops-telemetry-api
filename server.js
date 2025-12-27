@@ -47,6 +47,8 @@ db.serialize(() => {
     (err) => {
       if (err) {
         console.error('[telemetry] failed to ensure telemetry_events table', err);
+      } else {
+        console.log('[telemetry] ensured telemetry_events table (auto-created if missing)');
       }
     },
   );

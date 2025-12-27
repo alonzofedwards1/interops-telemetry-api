@@ -1,6 +1,6 @@
 # Telemetry SQLite schema (test-ready)
 
-This service now persists telemetry events to SQLite. Use the schema below to create a local test database on your EC2 instance (the Node app will also auto-create the table if it is missing).
+This service now persists telemetry events to SQLite. Simply start the service (`npm start`) and it will create `telemetry.db` and the `telemetry_events` table if they are missing. Use the schema below only if you want to pre-create the table manually on your EC2 instance.
 
 ## Schema
 ```sql

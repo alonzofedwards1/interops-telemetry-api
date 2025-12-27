@@ -15,6 +15,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 9000
 ```
 The service listens on port **8081** by default. Override with `PORT=<port>` if needed. Telemetry events persist to a local SQLite file at `./telemetry.db` (override with `TELEMETRY_DB_PATH=<path>`).
 
+Starting the service automatically creates `telemetry.db` and the `telemetry_events` table if they do not already exist—no manual migration step is required.
+
 ## Run with Docker
 ```bash
 docker build -t interops-telemetry-api .
