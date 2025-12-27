@@ -49,7 +49,9 @@ app.post('/api/telemetry/events', (req, res) => {
 // Telemetry read endpoint
 app.get('/api/telemetry/events', (_req, res) => {
   try {
-    res.json(telemetryStore.all());
+    const events = telemetryStore.all();
+    console.log(`[telemetry] returning ${events.length} event(s)`);
+    res.json(events);
   } catch (err) {
     console.error('[telemetry] error reading telemetry store', err);
     res.json([]);

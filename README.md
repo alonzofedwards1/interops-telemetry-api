@@ -72,6 +72,12 @@ Read stored telemetry:
 curl http://localhost:8081/api/telemetry/events
 ```
 
+If you see an empty array when reading:
+
+- Post your events to the **same host/port** you are reading from (for example, `curl` and browser both pointed at `http://localhost:8081`).
+- Remember storage is **in-memory only**; restarting `npm start` clears previously posted events.
+- Check the server logs for lines like `[telemetry] returning <n> event(s)` to confirm the backend received your payloads.
+
 ## Frontend configuration
 If you are viewing the telemetry table in the frontend, ensure it is pointed at the backend you are posting to. The UI defaults to `http://100.27.251.103:8081/api`; when you post events to `localhost`, set `REACT_APP_API_BASE_URL=http://localhost:8081/api`, restart the frontend, and refresh the page so it fetches from your local service.
 
