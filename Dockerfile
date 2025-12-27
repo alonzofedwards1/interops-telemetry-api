@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -7,8 +7,8 @@ COPY package*.json ./
 RUN apk add --no-cache python3 make g++ sqlite && \
     npm install --production
 
-COPY server.js ./
+COPY app ./app
 
 EXPOSE 8081
 
-CMD ["npm", "start"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000"]
