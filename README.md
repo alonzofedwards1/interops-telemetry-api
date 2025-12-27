@@ -15,6 +15,10 @@ uvicorn app.main:app --host 0.0.0.0 --port 9000
 ```
 The service listens on port **9000** by default and exposes Swagger UI at `/docs`.
 
+> Note: The application ignores any ambient `PORT` variable so it remains bound to
+> port 9000. To intentionally change the port, set `TELEMETRY_PORT=<port>` before
+> running.
+
 ## Run with Docker
 ```bash
 docker build -t interops-telemetry-api .
