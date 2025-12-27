@@ -1,20 +1,21 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TelemetryEvent(BaseModel):
-    eventId: str
-    eventType: Literal["PD_EXECUTION"]
-    timestamp: datetime
+    eventId: str = Field(..., description="Unique event identifier")
+    timestampUtc: datetime = Field(..., description="Event timestamp in UTC (ISO 8601)")
+    source: str = Field(..., description="Event source system")
+    protocol: str = Field(..., description="Protocol used for the event")
+    interactionId: str = Field(..., description="Interaction identifier")
+    organization: str = Field(..., description="Submitting organization")
+    qhin: str = Field(..., description="Qualified health information network")
+    environment: str = Field(..., description="Deployment environment")
+    status: Literal["SUCCESS", "FAILURE"] = Field(..., description="Execution status")
+    durationMs: int = Field(..., ge=0, description="Execution duration in milliseconds")
+    resultCount: int = Field(..., ge=0, description="Count of results returned")
+    correlationId: str = Field(..., description="Correlation identifier for tracing")
 
-    source: dict
-
-    correlation: dict
-
-    execution: dict
-
-    outcome: dict
-
-    protocol: dict
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True)

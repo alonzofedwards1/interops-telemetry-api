@@ -1,12 +1,12 @@
 FROM node:20-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install --production
 
 COPY server.js ./
 
-EXPOSE 8080
+EXPOSE 8081
 
 CMD ["npm", "start"]
