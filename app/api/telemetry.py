@@ -19,9 +19,9 @@ async def ingest_event(payload: dict = Body(...)) -> Response:
             "Telemetry event received",
             extra={
                 "eventId": event.eventId,
-                "source": event.source,
-                "status": event.status,
-                "protocol": event.protocol,
+                "source": event.source.model_dump() if event.source else None,
+                "status": event.outcome.status if event.outcome else None,
+                "protocol": event.protocol.model_dump() if event.protocol else None,
             },
         )
         store.add(event)
