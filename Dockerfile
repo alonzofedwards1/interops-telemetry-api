@@ -3,7 +3,9 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --production
+# Build dependencies needed for sqlite3 native module
+RUN apk add --no-cache python3 make g++ sqlite && \
+    npm install --production
 
 COPY app ./app
 

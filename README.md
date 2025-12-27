@@ -1,6 +1,6 @@
 # InterOps Telemetry API
 
-Minimal, production-safe telemetry ingestion API for InterOps built with Express. Accepts telemetry events over HTTP, stores them in memory for quick inspection, and never blocks callers on downstream work.
+Minimal, production-safe telemetry ingestion API for InterOps built with Express. Accepts telemetry events over HTTP, stores them in SQLite for quick inspection, and never blocks callers on downstream work.
 
 ## Requirements
 - Python 3.12+
@@ -13,7 +13,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 9000
 ```
-The service listens on port **8081** by default. Override with `PORT=<port>` if needed.
+The service listens on port **8081** by default. Override with `PORT=<port>` if needed. Telemetry events persist to a local SQLite file at `./telemetry.db` (override with `TELEMETRY_DB_PATH=<path>`).
 
 ## Run with Docker
 ```bash
@@ -23,7 +23,7 @@ docker run --rm -p 8081:8081 interops-telemetry-api
 
 ## Endpoints
 - `POST /api/telemetry/events` – accepts telemetry events and returns HTTP 202 immediately (non-blocking)
-- `GET /api/telemetry/events` – returns all stored telemetry events as JSON
+- `GET /api/telemetry/events` – returns all stored telemetry events as JSON from SQLite
 - `GET /health` – basic health probe
 
 ## Telemetry payload shape
@@ -75,7 +75,7 @@ curl http://localhost:8081/api/telemetry/events
 If you see an empty array when reading:
 
 - Post your events to the **same host/port** you are reading from (for example, `curl` and browser both pointed at `http://localhost:8081`).
-- Remember storage is **in-memory only**; restarting `npm start` clears previously posted events.
+- The SQLite file defaults to `./telemetry.db`. If you override `TELEMETRY_DB_PATH`, ensure the Node process can read/write that location.
 - Check the server logs for lines like `[telemetry] returning <n> event(s)` to confirm the backend received your payloads.
 
 ## Frontend configuration
@@ -83,5 +83,6 @@ If you are viewing the telemetry table in the frontend, ensure it is pointed at 
 
 ## Notes
 - CORS is enabled for all origins by default.
-- Telemetry storage is an in-memory array; data clears on restart.
+- Telemetry storage is persisted in SQLite for quick, file-backed testing.
 - Ingestion does not block callers; even invalid payloads receive HTTP 202 to avoid retries.
+- See `TELEMETRY_DB.md` for the schema and EC2 setup steps.
