@@ -3,13 +3,15 @@
 Minimal, production-safe telemetry ingestion API for InterOps built with Express. Accepts telemetry events over HTTP, stores them in SQLite for quick inspection, and never blocks callers on downstream work.
 
 ## Requirements
-- Node.js 20+
+- Python 3.12+
 - Docker (optional)
 
 ## Run locally
 ```bash
-npm install
-npm start
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 9000
 ```
 The service listens on port **8081** by default. Override with `PORT=<port>` if needed. Telemetry events persist to a local SQLite file at `./telemetry.db` (override with `TELEMETRY_DB_PATH=<path>`).
 
