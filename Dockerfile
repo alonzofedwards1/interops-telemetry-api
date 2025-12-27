@@ -1,12 +1,14 @@
 FROM node:20-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev
+# Build dependencies needed for sqlite3 native module
+RUN apk add --no-cache python3 make g++ sqlite && \
+    npm install --production
 
 COPY server.js ./
 
-EXPOSE 8080
+EXPOSE 8081
 
 CMD ["npm", "start"]
