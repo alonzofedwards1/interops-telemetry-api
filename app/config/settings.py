@@ -4,7 +4,9 @@ from typing import List, Optional
 
 
 DEFAULT_PORT = 8081
-DEFAULT_API_PREFIX = ""
+# Default API prefix matches the frontend client's base path so requests hit the
+# expected routes without extra configuration.
+DEFAULT_API_PREFIX = "/api"
 
 
 @dataclass(frozen=True)

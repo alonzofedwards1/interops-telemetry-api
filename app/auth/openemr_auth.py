@@ -26,6 +26,7 @@ class OpenEMRAuthManager:
         self.username = settings.openemr_username
         self.password = settings.openemr_password
         self.scope = settings.openemr_scope
+        self.user_role = getattr(settings, "openemr_user_role", None)
 
         self.access_token: Optional[str] = None
         self.expires_at: Optional[float] = None
@@ -78,10 +79,16 @@ class OpenEMRAuthManager:
 
         if self.scope:
             payload["scope"] = self.scope
+        if self.user_role:
+            payload["user_role"] = self.user_role
 
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.post(self.token_url, data=payload)
+                response = await client.post(
+                    self.token_url,
+                    data=payload,
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                )
                 response.raise_for_status()
         except httpx.HTTPStatusError as exc:
             logger.warning(
