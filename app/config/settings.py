@@ -4,6 +4,7 @@ from typing import List, Optional
 
 
 DEFAULT_PORT = 8081
+DEFAULT_API_PREFIX = ""
 
 
 @dataclass(frozen=True)
@@ -13,13 +14,14 @@ class Settings:
     # Use a dedicated env var to override only when intentional; default to 8081.
     port: int = int(os.environ.get("TELEMETRY_PORT", DEFAULT_PORT))
     allowed_origins: List[str] = None
-    api_prefix: str = "/api"
+    api_prefix: str = DEFAULT_API_PREFIX
 
 
 def get_settings() -> Settings:
     origins_value = os.environ.get("CORS_ORIGINS", "*")
     origins = [origin.strip() for origin in origins_value.split(",") if origin.strip()] or ["*"]
-    prefix_value = os.environ.get("API_PREFIX", "/api")
-    prefix = prefix_value if prefix_value.startswith("/") else f"/{prefix_value}"
+    prefix_value = os.environ.get("API_PREFIX", DEFAULT_API_PREFIX)
+    if prefix_value and not prefix_value.startswith("/"):
+        prefix_value = f"/{prefix_value}"
 
-    return Settings(allowed_origins=origins, api_prefix=prefix)
+    return Settings(allowed_origins=origins, api_prefix=prefix_value)
