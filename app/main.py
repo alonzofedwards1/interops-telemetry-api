@@ -1,15 +1,9 @@
 import logging
-import sys
-from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
-
-ROOT_PATH = Path(__file__).resolve().parent.parent
-if str(ROOT_PATH) not in sys.path:
-    sys.path.insert(0, str(ROOT_PATH))
 
 from app.api.telemetry import router as telemetry_router
 from app.auth.auth_routes import router as auth_router
