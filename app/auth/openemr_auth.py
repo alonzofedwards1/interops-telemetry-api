@@ -5,7 +5,6 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-import httpx
 from fastapi import HTTPException
 
 from app.config.settings import Settings, get_settings
@@ -59,6 +58,12 @@ class OpenEMRAuthManager:
             await self._refresh_access_token()
 
     async def _refresh_access_token(self) -> None:
+        try:
+            import httpx
+        except ImportError as exc:  # pragma: no cover - environment guardrail
+            logger.error("httpx is required for OpenEMR token refresh; install from requirements.txt")
+            raise HTTPException(status_code=500, detail="httpx dependency missing") from exc
+
         if not all([self.client_id, self.client_secret, self.token_url, self.username, self.password]):
             logger.error("OpenEMR OAuth settings are incomplete; cannot refresh token")
             raise HTTPException(status_code=500, detail="OpenEMR OAuth configuration incomplete")

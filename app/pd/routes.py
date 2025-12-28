@@ -3,7 +3,6 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import uuid4
 
-import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -41,6 +40,12 @@ class PDSearchRequest(BaseModel):
 
 @router.post("/search")
 async def pd_search(request: PDSearchRequest):
+    try:
+        import httpx
+    except ImportError as exc:  # pragma: no cover - environment guardrail
+        logger.error("httpx is required to submit PD requests; install from requirements.txt")
+        raise HTTPException(status_code=500, detail="httpx dependency missing") from exc
+
     settings = get_settings()
     if not settings.mirth_pd_endpoint_url:
         logger.error("Mirth PD endpoint URL is not configured")
