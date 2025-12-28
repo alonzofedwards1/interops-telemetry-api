@@ -11,13 +11,17 @@ if str(ROOT_PATH) not in sys.path:
     sys.path.insert(0, str(ROOT_PATH))
 
 from app.api.telemetry import router as telemetry_router
+from app.auth.routes import router as auth_router
 from app.config.settings import get_settings
+from app.pd.routes import router as pd_router
+from app.timeline.routes import router as timeline_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
 settings = get_settings()
 
 app = FastAPI(title="InterOps Telemetry API")
+API_PREFIX = "/api"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,

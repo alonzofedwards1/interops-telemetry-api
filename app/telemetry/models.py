@@ -26,7 +26,7 @@ class ExecutionInfo(BaseModel):
 
 
 class OutcomeInfo(BaseModel):
-    status: Optional[Literal["SUCCESS", "FAILURE"]] = Field(None, description="Execution status")
+    status: Optional[Literal["SUCCESS", "FAILURE", "REQUESTED"]] = Field(None, description="Execution status")
     resultCount: Optional[int] = Field(None, ge=0, description="Count of results returned")
 
     model_config = ConfigDict(extra="allow")
