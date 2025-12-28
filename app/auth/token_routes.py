@@ -19,8 +19,21 @@ class ManualTokenRequest(BaseModel):
     scope: Optional[str] = None
 
 
+class ManualTokenResponse(BaseModel):
+    status: str
+    expires_in: int
+    scope: Optional[str] = None
+
+
+class TokenStatusResponse(BaseModel):
+    token_present: bool
+    expires_in: Optional[int] = None
+    expires_at: Optional[int] = None
+    scope: Optional[str] = None
+
+
 @router.post("/manual")
-async def manual_token_fetch(body: ManualTokenRequest):
+async def manual_token_fetch(body: ManualTokenRequest) -> ManualTokenResponse:
     try:
         import httpx
     except ImportError as exc:  # pragma: no cover - environment guardrail
@@ -78,19 +91,19 @@ async def manual_token_fetch(body: ManualTokenRequest):
         logger.exception("Unexpected error during manual OpenEMR token fetch")
         raise HTTPException(status_code=502, detail="Failed to fetch OpenEMR token")
 
-    return {"status": "ok", "expires_in": int(expires_in), "scope": manager.scope}
+    return ManualTokenResponse(status="ok", expires_in=int(expires_in), scope=manager.scope)
 
 
 @router.get("/status")
-async def token_status():
+async def token_status() -> TokenStatusResponse:
     manager = get_openemr_auth_manager()
     expires_in = manager.expires_in_seconds()
-    return {
-        "token_present": manager.access_token is not None,
-        "expires_in": expires_in,
-        "expires_at": int(manager.expires_at) if manager.expires_at else None,
-        "scope": manager.scope,
-    }
+    return TokenStatusResponse(
+        token_present=manager.access_token is not None,
+        expires_in=expires_in,
+        expires_at=int(manager.expires_at) if manager.expires_at else None,
+        scope=manager.scope,
+    )
 
 
 @router.post("/refresh")
