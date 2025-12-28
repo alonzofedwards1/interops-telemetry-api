@@ -13,6 +13,7 @@ if str(ROOT_PATH) not in sys.path:
 
 from app.api.telemetry import router as telemetry_router
 from app.auth.auth_routes import router as auth_router
+from app.auth.token_routes import router as token_router
 from app.config.settings import get_settings
 from app.pd.pd_routes import router as pd_router
 from app.timeline.timeline_routes import router as timeline_router
@@ -44,6 +45,7 @@ app.include_router(telemetry_router, prefix=settings.api_prefix)
 app.include_router(pd_router, prefix=settings.api_prefix)
 app.include_router(timeline_router, prefix=settings.api_prefix)
 app.include_router(auth_router, prefix=settings.api_prefix)
+app.include_router(token_router, prefix=settings.api_prefix)
 
 
 @app.get("/health")
