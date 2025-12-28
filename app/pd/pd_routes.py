@@ -6,6 +6,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.auth.openemr_auth import get_openemr_auth_manager
 from app.config.settings import get_settings
 from app.telemetry.models import (
     CorrelationInfo,
@@ -61,6 +62,16 @@ async def pd_search(request: PDSearchRequest):
             "dob": request.demographics.dob.isoformat(),
         },
     }
+
+    manager = get_openemr_auth_manager()
+
+    try:
+        await manager.get_access_token()
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Failed to obtain OpenEMR access token before PD search")
+        raise HTTPException(status_code=502, detail="Unable to obtain OpenEMR access token")
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
