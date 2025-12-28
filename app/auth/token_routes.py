@@ -32,7 +32,7 @@ class TokenStatusResponse(BaseModel):
     scope: Optional[str] = None
 
 
-@router.post("/manual")
+@router.post("/manual", response_model=ManualTokenResponse)
 async def manual_token_fetch(body: ManualTokenRequest) -> ManualTokenResponse:
     try:
         import httpx
@@ -94,7 +94,7 @@ async def manual_token_fetch(body: ManualTokenRequest) -> ManualTokenResponse:
     return ManualTokenResponse(status="ok", expires_in=int(expires_in), scope=manager.scope)
 
 
-@router.get("/status")
+@router.get("/status", response_model=TokenStatusResponse)
 async def token_status() -> TokenStatusResponse:
     manager = get_openemr_auth_manager()
     expires_in = manager.expires_in_seconds()
