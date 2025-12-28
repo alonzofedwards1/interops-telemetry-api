@@ -71,7 +71,7 @@ async def pd_search(request: PDSearchRequest):
         raise
     except Exception:
         logger.exception("Failed to obtain OpenEMR access token before PD search")
-        raise HTTPException(status_code=500, detail="Unable to obtain OpenEMR access token")
+        raise HTTPException(status_code=502, detail="Unable to obtain OpenEMR access token")
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:

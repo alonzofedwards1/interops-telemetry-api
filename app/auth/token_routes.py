@@ -30,11 +30,11 @@ async def token_refresh():
             manager.access_token = None
             manager.expires_at = None
             await manager._refresh_access_token()
-    except HTTPException:
-        raise
+    except HTTPException as exc:
+        raise HTTPException(status_code=502, detail=exc.detail)
     except Exception:
         logger.exception("Failed to refresh OpenEMR token")
-        raise HTTPException(status_code=500, detail="Failed to refresh token")
+        raise HTTPException(status_code=502, detail="Failed to refresh OpenEMR token")
 
     return manager.health()
 
