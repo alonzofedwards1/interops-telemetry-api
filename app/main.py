@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 settings = get_settings()
 
 app = FastAPI(title="InterOps Telemetry API")
+API_PREFIX = "/api"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
@@ -25,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=False,
 )
-app.include_router(telemetry_router, prefix="/api")
+app.include_router(telemetry_router, prefix=API_PREFIX)
 
 
 @app.get("/health")
