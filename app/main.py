@@ -17,6 +17,7 @@ from app.pd.routes import router as pd_router
 from app.timeline.routes import router as timeline_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -29,7 +30,11 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=False,
 )
+logger.info("Registering routers with API prefix %s", settings.api_prefix)
 app.include_router(telemetry_router, prefix=settings.api_prefix)
+app.include_router(pd_router, prefix=settings.api_prefix)
+app.include_router(timeline_router, prefix=settings.api_prefix)
+app.include_router(auth_router, prefix=settings.api_prefix)
 
 
 @app.get("/health")
