@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=False,
 )
-app.include_router(telemetry_router, prefix="/api")
+app.include_router(telemetry_router, prefix=settings.api_prefix)
 
 
 @app.get("/health")
