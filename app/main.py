@@ -5,23 +5,32 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 
 ROOT_PATH = Path(__file__).resolve().parent.parent
 if str(ROOT_PATH) not in sys.path:
     sys.path.insert(0, str(ROOT_PATH))
 
 from app.api.telemetry import router as telemetry_router
-from app.auth.routes import router as auth_router
+from app.auth.auth_routes import router as auth_router
 from app.config.settings import get_settings
-from app.pd.routes import router as pd_router
-from app.timeline.routes import router as timeline_router
+from app.pd.pd_routes import router as pd_router
+from app.timeline.timeline_routes import router as timeline_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
-app = FastAPI(title="InterOps Telemetry API")
+
+def generate_unique_operation_id(route: APIRoute) -> str:
+    tag = route.tags[0] if route.tags else "default"
+    methods = ",".join(sorted(route.methods or []))
+    path_fragment = route.path_format.strip("/").replace("/", "-") or "root"
+    return f"{tag}-{methods}-{path_fragment}"
+
+
+app = FastAPI(title="InterOps Telemetry API", generate_unique_id_function=generate_unique_operation_id)
 API_PREFIX = "/api"
 app.add_middleware(
     CORSMiddleware,
