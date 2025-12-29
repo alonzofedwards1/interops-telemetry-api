@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 
-DEFAULT_PORT = 8081
+DEFAULT_PORT = 8000
 # Default API prefix matches the frontend client's base path so requests hit the
 # expected routes without extra configuration.
 DEFAULT_API_PREFIX = "/api"
@@ -13,7 +13,7 @@ DEFAULT_API_PREFIX = "/api"
 class Settings:
     """Application settings."""
 
-    # Use a dedicated env var to override only when intentional; default to 8081.
+    # Use a dedicated env var to override only when intentional; default to 8000.
     port: int = int(os.environ.get("TELEMETRY_PORT", DEFAULT_PORT))
     allowed_origins: List[str] = None
     api_prefix: str = DEFAULT_API_PREFIX
