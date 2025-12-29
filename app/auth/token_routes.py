@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -20,89 +19,71 @@ class ManualTokenRequest(BaseModel):
 
 
 class ManualTokenResponse(BaseModel):
-    status: str
-    expires_in: int
+    token_present: bool
+    expires_in_seconds: Optional[int] = None
     scope: Optional[str] = None
 
 
 class TokenStatusResponse(BaseModel):
     token_present: bool
-    expires_in: Optional[int] = None
-    expires_at: Optional[int] = None
-    scope: Optional[str] = None
+    expires_in_seconds: Optional[int] = None
+    expires_soon: bool
 
 
 @router.post("/manual", response_model=ManualTokenResponse)
 async def manual_token_fetch(body: ManualTokenRequest) -> ManualTokenResponse:
-    try:
-        import httpx
-    except ImportError as exc:  # pragma: no cover - environment guardrail
-        logger.error("httpx is required for manual OpenEMR token fetch; install from requirements.txt")
-        raise HTTPException(status_code=500, detail="httpx dependency missing") from exc
-
     manager = get_openemr_auth_manager()
 
     if not manager.token_url:
         logger.error("OpenEMR token endpoint is not configured")
         raise HTTPException(status_code=500, detail="OpenEMR token endpoint not configured")
 
-    payload = {
-        "grant_type": "password",
-        "client_id": body.client_id,
-        "client_secret": body.client_secret,
-        "username": body.username,
-        "password": body.password,
-        "user_role": "users",
+    prior_values = {
+        "client_id": manager.client_id,
+        "client_secret": manager.client_secret,
+        "username": manager.username,
+        "password": manager.password,
+        "scope": manager.scope,
+        "user_role": getattr(manager, "user_role", None),
     }
-
-    if body.scope:
-        payload["scope"] = body.scope
 
     try:
         async with manager._lock:
-            async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.post(
-                    manager.token_url,
-                    data=payload,
-                    headers={"Content-Type": "application/x-www-form-urlencoded"},
-                )
-                response.raise_for_status()
-
-            token_data = response.json()
-            access_token = token_data.get("access_token")
-            expires_in = token_data.get("expires_in", 3600)
-
-            if not access_token:
-                logger.error("OpenEMR token response missing access_token during manual fetch")
-                raise HTTPException(status_code=502, detail="OpenEMR token response invalid")
-
-            manager.access_token = access_token
-            manager.expires_at = time.time() + expires_in
-            manager.scope = token_data.get("scope", body.scope or manager.scope)
+            manager.client_id = body.client_id
+            manager.client_secret = body.client_secret
+            manager.username = body.username
+            manager.password = body.password
+            manager.scope = body.scope or manager.scope
+            manager.user_role = "users"
+            await manager._refresh_access_token()
     except HTTPException:
         raise
-    except httpx.HTTPStatusError as exc:
-        logger.warning(
-            "OpenEMR token endpoint returned error during manual fetch",
-            extra={"status_code": exc.response.status_code, "response": exc.response.text},
-        )
-        raise HTTPException(status_code=502, detail="Failed to fetch OpenEMR token") from exc
     except Exception:
         logger.exception("Unexpected error during manual OpenEMR token fetch")
         raise HTTPException(status_code=502, detail="Failed to fetch OpenEMR token")
-
-    return ManualTokenResponse(status="ok", expires_in=int(expires_in), scope=manager.scope)
+    finally:
+        manager.client_id = prior_values["client_id"]
+        manager.client_secret = prior_values["client_secret"]
+        manager.username = prior_values["username"]
+        manager.password = prior_values["password"]
+        manager.scope = manager.scope or prior_values["scope"]
+        manager.user_role = prior_values["user_role"]
+    health = manager.health()
+    return ManualTokenResponse(
+        token_present=health["token_present"],
+        expires_in_seconds=health["expires_in_seconds"],
+        scope=health.get("scope"),
+    )
 
 
 @router.get("/status", response_model=TokenStatusResponse)
 async def token_status() -> TokenStatusResponse:
     manager = get_openemr_auth_manager()
-    expires_in = manager.expires_in_seconds()
+    health = manager.health()
     return TokenStatusResponse(
-        token_present=manager.access_token is not None,
-        expires_in=expires_in,
-        expires_at=int(manager.expires_at) if manager.expires_at else None,
-        scope=manager.scope,
+        token_present=health["token_present"],
+        expires_in_seconds=health["expires_in_seconds"],
+        expires_soon=health["expires_soon"],
     )
 
 
