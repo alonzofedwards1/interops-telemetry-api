@@ -9,6 +9,6 @@ RUN apk add --no-cache python3 make g++ sqlite && \
 
 COPY app ./app
 
-EXPOSE 8081
+EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000"]

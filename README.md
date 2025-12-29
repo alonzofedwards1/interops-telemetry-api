@@ -36,14 +36,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 9000
 ```
-The service listens on port **8081** by default. Override with `PORT=<port>` if needed. Telemetry events persist to a local SQLite file at `./telemetry.db` (override with `TELEMETRY_DB_PATH=<path>`).
+The service listens on port **8000** by default. Override with `PORT=<port>` if needed. Telemetry events persist to a local SQLite file at `./telemetry.db` (override with `TELEMETRY_DB_PATH=<path>`).
 
 Starting the service automatically creates `telemetry.db` and the `telemetry_events` table if they do not already exist—no manual migration step is required.
 
 ## Run with Docker
 ```bash
 docker build -t interops-telemetry-api .
-docker run --rm -p 8081:8081 interops-telemetry-api
+docker run --rm -p 8000:8000 interops-telemetry-api
 ```
 
 ## Endpoints
@@ -57,7 +57,7 @@ docker run --rm -p 8081:8081 interops-telemetry-api
 
 If any of the `/api/tokens/*` or `/api/pd/search` routes return 404, your FastAPI app was started from the wrong working
 directory or without importing `app.main`. Start from the repository root (where `requirements.txt` lives) and visit
-`http://localhost:8081/docs` to confirm the routes are mounted.
+`http://localhost:8000/docs` to confirm the routes are mounted.
 
 ## Telemetry payload shape
 ```json
@@ -81,7 +81,7 @@ directory or without importing `app.main`. Start from the repository root (where
 ## Example curl commands
 Post telemetry (mirrors Mirth HTTP Sender):
 ```bash
-curl -i -X POST http://localhost:8081/api/telemetry/events \
+curl -i -X POST http://localhost:8000/api/telemetry/events \
   -H "Content-Type: application/json" \
   -d '{
     "eventId": "evt-001",
@@ -102,17 +102,17 @@ curl -i -X POST http://localhost:8081/api/telemetry/events \
 
 Read stored telemetry:
 ```bash
-curl http://localhost:8081/api/telemetry/events
+curl http://localhost:8000/api/telemetry/events
 ```
 
 If you see an empty array when reading:
 
-- Post your events to the **same host/port** you are reading from (for example, `curl` and browser both pointed at `http://localhost:8081`).
+- Post your events to the **same host/port** you are reading from (for example, `curl` and browser both pointed at `http://localhost:8000`).
 - The SQLite file defaults to `./telemetry.db`. If you override `TELEMETRY_DB_PATH`, ensure the Node process can read/write that location.
 - Check the server logs for lines like `[telemetry] returning <n> event(s)` to confirm the backend received your payloads.
 
 ## Frontend configuration
-If you are viewing the telemetry table in the frontend, ensure it is pointed at the backend you are posting to. The UI defaults to `http://100.27.251.103:8081/api`; when you post events to `localhost`, set `REACT_APP_API_BASE_URL=http://localhost:8081/api`, restart the frontend, and refresh the page so it fetches from your local service.
+If you are viewing the telemetry table in the frontend, ensure it is pointed at the backend you are posting to. The UI defaults to `http://100.27.251.103:8000/api`; when you post events to `localhost`, set `REACT_APP_API_BASE_URL=http://localhost:8000/api`, restart the frontend, and refresh the page so it fetches from your local service.
 
 ## Notes
 - CORS is enabled for all origins by default.
