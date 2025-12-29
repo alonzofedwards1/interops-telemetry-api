@@ -1,10 +1,33 @@
 # InterOps Telemetry API
 
-Minimal, production-safe telemetry ingestion API for InterOps built with Express. Accepts telemetry events over HTTP, stores them in SQLite for quick inspection, and never blocks callers on downstream work.
+Minimal, production-safe telemetry ingestion API for InterOps built with FastAPI. It accepts telemetry events over HTTP, stores them in SQLite for quick inspection, and never blocks callers on downstream work.
 
 ## Requirements
 - Python 3.12+
 - Docker (optional)
+
+## Backend layout and imports
+Open the repository root as your working directory—the `app/` package lives directly under it:
+
+```
+interops-telemetry-api/
+├── app/
+│   ├── api/
+│   ├── auth/
+│   ├── pd/
+│   ├── telemetry/
+│   └── timeline/
+├── frontend/
+└── requirements.txt
+```
+
+If you open or run code from the nested `app/` directory itself, Python will not see the repository root on `sys.path`, and imports like `from app.auth.openemr_auth import OpenEMRAuthManager` will fail. Running commands from the repository root keeps `app` resolvable without manual `PYTHONPATH` edits. From the root you can start the API with:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 9000
+```
+
+PyCharm users can right-click the repository root and choose **Mark Directory as → Sources Root** to make sure editor autocomplete resolves `app.*` imports consistently.
 
 ## Run locally
 ```bash
@@ -24,9 +47,17 @@ docker run --rm -p 8081:8081 interops-telemetry-api
 ```
 
 ## Endpoints
+- `POST /api/tokens/manual` – fetch an OpenEMR access token via password grant (never returns the token itself)
+- `GET /api/tokens/status` – report whether a token is cached along with expiry metadata
+- `POST /api/tokens/refresh` – force a refresh using the configured OpenEMR credentials
+- `POST /api/pd/search` – submit a patient-discovery request to the configured Mirth endpoint
 - `POST /api/telemetry/events` – accepts telemetry events and returns HTTP 202 immediately (non-blocking)
 - `GET /api/telemetry/events` – returns all stored telemetry events as JSON from SQLite
 - `GET /health` – basic health probe
+
+If any of the `/api/tokens/*` or `/api/pd/search` routes return 404, your FastAPI app was started from the wrong working
+directory or without importing `app.main`. Start from the repository root (where `requirements.txt` lives) and visit
+`http://localhost:8081/docs` to confirm the routes are mounted.
 
 ## Telemetry payload shape
 ```json

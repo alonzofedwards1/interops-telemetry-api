@@ -1,6 +1,6 @@
 # Codex prompt for the interoperability UI
 
-You are generating a Create React App (CRA) frontend that talks to a FastAPI backend acting as an interoperability control plane. Follow these constraints so the UI aligns with the existing backend:
+You are generating a Create React App (CRA) frontend that talks to a FastAPI backend. Follow these constraints so the UI aligns with the existing backend:
 
 ## API base
 - All backend routes are mounted under the `/api` prefix.
