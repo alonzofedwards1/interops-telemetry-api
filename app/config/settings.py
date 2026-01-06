@@ -20,7 +20,10 @@ class Settings:
 
 
 def get_settings() -> Settings:
-    origins_value = os.environ.get("CORS_ORIGINS", "*")
+    origins_value = os.environ.get(
+        "CORS_ORIGINS",
+        "http://dashboard.interop.100.48.218.100.nip.io,http://localhost:3000",
+    )
     origins = [origin.strip() for origin in origins_value.split(",") if origin.strip()] or ["*"]
     prefix_value = os.environ.get("API_PREFIX", DEFAULT_API_PREFIX)
     if prefix_value and not prefix_value.startswith("/"):
