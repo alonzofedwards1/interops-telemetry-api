@@ -53,7 +53,7 @@ async def issue_token(body: TokenRequest) -> TokenResponse:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     digest = create_access_token({"sub": user.id, "email": user.email, "role": user.role})
-    return TokenResponse(digest=digest, user=UserInfo.model_validate(user))
+    return TokenResponse(digest=digest, user=UserInfo.model_validate(user.model_dump()))
 
 
 @router.post("/auth/password/forgot")
