@@ -1,7 +1,7 @@
 import logging
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 
@@ -11,6 +11,7 @@ from app.auth.token_routes import router as token_router
 from app.config.settings import get_settings
 from app.pd.pd_routes import router as pd_router
 from app.timeline.timeline_routes import router as timeline_router
+from interop_telemetry_api.telemetry.logger import log_telemetry_event
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -45,6 +46,17 @@ app.include_router(token_router, prefix=settings.api_prefix)
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+@app.post("/telemetry/test")
+def telemetry_test(background_tasks: BackgroundTasks) -> dict:
+    log_telemetry_event(
+        background_tasks,
+        event_type="telemetry.test",
+        status="success",
+        raw_payload={"ok": True},
+    )
+    return {"status": "logged"}
 
 
 if __name__ == "__main__":
