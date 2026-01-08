@@ -1,8 +1,9 @@
 import logging
-from fastapi import APIRouter, Body, HTTPException, Response
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Response
 from fastapi.responses import JSONResponse
 
 from app.telemetry.models import TelemetryEvent
+from app.telemetry.materializer import materialize_event
 from app.telemetry.store import get_store
 from app.telemetry.validator import validate_event_payload
 
@@ -12,7 +13,7 @@ store = get_store()
 
 
 @router.post("/events")
-async def ingest_event(payload: dict = Body(...)) -> Response:
+async def ingest_event(payload: dict = Body(...), background_tasks: BackgroundTasks = None) -> Response:
     try:
         event: TelemetryEvent = validate_event_payload(payload)
         logger.info(
@@ -25,6 +26,10 @@ async def ingest_event(payload: dict = Body(...)) -> Response:
             },
         )
         store.add(event)
+        if background_tasks:
+            background_tasks.add_task(materialize_event, event)
+        else:
+            materialize_event(event)
         return JSONResponse(status_code=200, content={"status": "ok"})
     except HTTPException:
         raise

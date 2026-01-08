@@ -9,6 +9,7 @@ from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.control import router as control_router
+from app.api.pd_executions import router as pd_executions_router
 from app.api.telemetry import router as telemetry_router
 from app.auth.auth_routes import router as auth_router
 from app.auth.token_routes import router as token_router
@@ -42,6 +43,7 @@ app.add_middleware(
 logger.info("Registering routers with API prefix %s", settings.api_prefix)
 app.include_router(control_router, prefix=settings.api_prefix)
 app.include_router(telemetry_router, prefix=settings.api_prefix)
+app.include_router(pd_executions_router, prefix=settings.api_prefix)
 app.include_router(pd_router, prefix=settings.api_prefix)
 app.include_router(timeline_router, prefix=settings.api_prefix)
 app.include_router(auth_router, prefix=settings.api_prefix)
