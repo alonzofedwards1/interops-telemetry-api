@@ -13,7 +13,7 @@ store = get_store()
 
 
 @router.post("/events")
-async def ingest_event(payload: dict = Body(...), background_tasks: BackgroundTasks = None) -> Response:
+async def ingest_event(payload: dict = Body(...), background_tasks: BackgroundTasks) -> Response:
     try:
         event: TelemetryEvent = validate_event_payload(payload)
         logger.info(
@@ -26,10 +26,7 @@ async def ingest_event(payload: dict = Body(...), background_tasks: BackgroundTa
             },
         )
         store.add(event)
-        if background_tasks:
-            background_tasks.add_task(materialize_event, event)
-        else:
-            materialize_event(event)
+        background_tasks.add_task(materialize_event, event)
         return JSONResponse(status_code=200, content={"status": "ok"})
     except HTTPException:
         raise
