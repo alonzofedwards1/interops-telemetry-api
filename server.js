@@ -54,13 +54,15 @@ db.serialize(() => {
   );
 });
 
+const telemetryEvents = [];
+
 function isValidTelemetry(event) {
   if (!event || typeof event !== 'object') return false;
   const { eventId, eventType } = event;
   return typeof eventId === 'string' && eventId.length > 0 && typeof eventType === 'string' && eventType.length > 0;
 }
 
-function storeTelemetryEvent(payload) {
+function persistTelemetryEvent(payload) {
   const source = payload?.source || {};
   const correlation = payload?.correlation || {};
   const execution = payload?.execution || {};
@@ -70,124 +72,88 @@ function storeTelemetryEvent(payload) {
   const eventId = typeof payload.eventId === 'string' ? payload.eventId : null;
   const eventType = typeof payload.eventType === 'string' ? payload.eventType : null;
   const timestampUtc =
-    typeof payload.timestampUtc === 'string'
-      ? payload.timestampUtc
-      : typeof payload.timestamp === 'string'
-        ? payload.timestamp
+    typeof payload.timestamp === 'string'
+      ? payload.timestamp
+      : typeof payload.timestampUtc === 'string'
+        ? payload.timestampUtc
         : null;
-
-  const sourceSystem =
-    typeof source.system === 'string'
-      ? source.system
-      : typeof payload.source === 'string'
-        ? payload.source
-        : null;
+  const sourceSystem = typeof source.system === 'string' ? source.system : null;
   const sourceChannelId = typeof source.channelId === 'string' ? source.channelId : null;
   const sourceEnvironment = typeof source.environment === 'string' ? source.environment : null;
-  const organization = typeof payload.organization === 'string' ? payload.organization : null;
-  const qhin = typeof payload.qhin === 'string' ? payload.qhin : null;
-  const environment = typeof payload.environment === 'string' ? payload.environment : null;
-  const status =
-    typeof outcome.status === 'string'
-      ? outcome.status
-      : typeof payload.status === 'string'
-        ? payload.status
-        : null;
-  const durationMs =
-    typeof execution.durationMs === 'number'
-      ? execution.durationMs
-      : typeof payload.durationMs === 'number'
-        ? payload.durationMs
-        : null;
-  const resultCount =
-    typeof outcome.resultCount === 'number'
-      ? outcome.resultCount
-      : typeof payload.resultCount === 'number'
-        ? payload.resultCount
-        : null;
-  const correlationId = typeof payload.correlationId === 'string' ? payload.correlationId : null;
+  const status = typeof outcome.status === 'string' ? outcome.status : null;
+  const durationMs = typeof execution.durationMs === 'number' ? execution.durationMs : null;
+  const resultCount = typeof outcome.resultCount === 'number' ? outcome.resultCount : null;
   const correlationRequestId = typeof correlation.requestId === 'string' ? correlation.requestId : null;
   const correlationMessageId = typeof correlation.messageId === 'string' ? correlation.messageId : null;
-  const protocolStandard =
-    typeof protocol.standard === 'string'
-      ? protocol.standard
-      : typeof payload.protocol === 'string'
-        ? payload.protocol
-        : null;
-  const protocolInteractionId =
-    typeof protocol.interactionId === 'string'
-      ? protocol.interactionId
-      : typeof payload.interactionId === 'string'
-        ? payload.interactionId
-        : null;
-
+  const protocolStandard = typeof protocol.standard === 'string' ? protocol.standard : null;
+  const protocolInteractionId = typeof protocol.interactionId === 'string' ? protocol.interactionId : null;
   const rawPayload = JSON.stringify(payload ?? {});
 
-  db.run(
-    `INSERT INTO telemetry_events (
-      event_id,
-      event_type,
-      timestamp_utc,
-      source_system,
-      source_channel_id,
-      source_environment,
-      organization,
-      qhin,
-      environment,
-      status,
-      duration_ms,
-      result_count,
-      correlation_id,
-      correlation_request_id,
-      correlation_message_id,
-      protocol_standard,
-      protocol_interaction_id,
-      raw_payload
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [
-      eventId,
-      eventType,
-      timestampUtc,
-      sourceSystem,
-      sourceChannelId,
-      sourceEnvironment,
-      organization,
-      qhin,
-      environment,
-      status,
-      durationMs,
-      resultCount,
-      correlationId,
-      correlationRequestId,
-      correlationMessageId,
-      protocolStandard,
-      protocolInteractionId,
-      rawPayload,
-    ],
-    (err) => {
-      if (err) {
-        console.error('[telemetry] failed to persist telemetry event', err);
-      } else {
-        console.log(`[telemetry] stored event ${eventId || 'unknown-id'}`);
-      }
-    },
-  );
+  try {
+    db.run(
+      `INSERT INTO telemetry_events (
+        event_id,
+        event_type,
+        timestamp_utc,
+        source_system,
+        source_channel_id,
+        source_environment,
+        status,
+        duration_ms,
+        result_count,
+        correlation_request_id,
+        correlation_message_id,
+        protocol_standard,
+        protocol_interaction_id,
+        raw_payload
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        eventId,
+        eventType,
+        timestampUtc,
+        sourceSystem,
+        sourceChannelId,
+        sourceEnvironment,
+        status,
+        durationMs,
+        resultCount,
+        correlationRequestId,
+        correlationMessageId,
+        protocolStandard,
+        protocolInteractionId,
+        rawPayload,
+      ],
+      (err) => {
+        if (err) {
+          console.error('[telemetry][db] insert failed', err);
+        } else {
+          console.info('[telemetry][db] event persisted', { eventId });
+        }
+      },
+    );
+  } catch (err) {
+    console.error('[telemetry][db] insert failed', err);
+  }
 }
 
 // Telemetry ingestion (non-blocking, always returns 202)
 app.post('/api/telemetry/events', (req, res) => {
   try {
     const payload = req.body || {};
-    const eventId = typeof payload.eventId === 'string' ? payload.eventId : 'unknown-id';
+    const eventId = typeof payload.eventId === 'string' ? payload.eventId : null;
+    const eventType = typeof payload.eventType === 'string' ? payload.eventType : null;
+    const status = typeof payload?.outcome?.status === 'string' ? payload.outcome.status : null;
+
+    console.info('[telemetry][ingest] event received', { eventId, eventType, status });
 
     if (isValidTelemetry(payload)) {
-      storeTelemetryEvent(payload);
-      console.log(`[telemetry] received event ${eventId}`);
+      telemetryEvents.push(payload);
+      persistTelemetryEvent(payload);
     } else {
-      console.warn(`[telemetry] invalid telemetry payload received (eventId=${eventId})`);
+      console.warn('[telemetry][ingest] invalid telemetry payload received', { eventId, eventType });
     }
   } catch (err) {
-    console.error('[telemetry] error handling telemetry payload', err);
+    console.error('[telemetry][ingest] error handling telemetry payload', err);
   }
 
   res.sendStatus(202);
@@ -196,26 +162,10 @@ app.post('/api/telemetry/events', (req, res) => {
 // Telemetry read endpoint
 app.get('/api/telemetry/events', (_req, res) => {
   try {
-    db.all('SELECT raw_payload FROM telemetry_events ORDER BY id ASC', (err, rows) => {
-      if (err) {
-        console.error('[telemetry] error reading telemetry store', err);
-        res.json([]);
-        return;
-      }
-
-      const events = rows.map((row) => {
-        try {
-          return JSON.parse(row.raw_payload);
-        } catch (_parseErr) {
-          return { raw_payload: row.raw_payload };
-        }
-      });
-
-      console.log(`[telemetry] returning ${events.length} event(s)`);
-      res.json(events);
-    });
+    console.info('[telemetry][read] returning events', { count: telemetryEvents.length, source: 'memory' });
+    res.json(telemetryEvents);
   } catch (err) {
-    console.error('[telemetry] error reading telemetry store', err);
+    console.error('[telemetry][read] error reading telemetry store', err);
     res.json([]);
   }
 });
