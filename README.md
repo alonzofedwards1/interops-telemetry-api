@@ -114,9 +114,14 @@ List PD executions:
 curl http://localhost:8000/api/pd-executions
 ```
 
-Count PD executions:
+Summarize PD executions:
 ```bash
-curl http://localhost:8000/api/pd-executions/count
+curl http://localhost:8000/api/pd-executions/summary
+```
+
+Materialize from telemetry:
+```bash
+curl -X POST http://localhost:8000/api/pd-executions/materialize
 ```
 
 If you see an empty array when reading:
