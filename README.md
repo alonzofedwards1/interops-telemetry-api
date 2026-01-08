@@ -105,6 +105,20 @@ Read stored telemetry:
 curl http://localhost:8000/api/telemetry/events
 ```
 
+## PD executions (materialized)
+The API derives PD execution rows from telemetry events with `eventType = "pd.request.completed"`.
+These rows are stored in `pd_executions` for dashboard rollups.
+
+List PD executions:
+```bash
+curl http://localhost:8000/api/pd-executions
+```
+
+Count PD executions:
+```bash
+curl http://localhost:8000/api/pd-executions/count
+```
+
 If you see an empty array when reading:
 
 - Post your events to the **same host/port** you are reading from (for example, `curl` and browser both pointed at `http://localhost:8000`).
