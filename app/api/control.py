@@ -76,11 +76,6 @@ async def list_findings() -> List[dict]:
     return []
 
 
-@router.get("/pd-executions")
-async def list_pd_executions() -> List[dict]:
-    return []
-
-
 @router.get("/committee/queue")
 async def committee_queue() -> List[dict]:
     return []
